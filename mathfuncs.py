@@ -54,22 +54,3 @@ def proto_cost_function(correct_number, layer, avg_or_not = "avg"):
         avg_cost = sum(cost_list) / 10
         return avg_cost
     return cost_list
-
-def find_gradient(neurons, cost):
-
-
-#def find_gradient(neurons, weights):
-# given a list of neuron values and weights, we should be able to find the gradient function
-# the first layer should be easy, but the second layer relies on the first
-# this should probably be split into multiple functions
-
-#def hill_climb(idk):
-    #what even goes here as an argument?
-    #goal: minimize cost function by changing weights between neurons
-    #cost function value will just be a number between 0-1
-    #cost function variables will be the weights, coefficients will be value of neurons
-    #I guess the simplest version of hill_climb would select a random value to change each parameter by, and check if the cost function improved
-    #eg if changing weight x decreased the cost function, we would keep moving that way until it started increasing
-    #then change next weight, keep changing until that starts increasing, repeat
-    #not sure how well this would work in 1000+ dimensions though
-    #the weights should probably just be stored in a list
