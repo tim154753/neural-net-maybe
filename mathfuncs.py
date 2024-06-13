@@ -34,15 +34,17 @@ def sigmoid(value):
 def generate_next_layer(layer):
     first_layer_values = [layer.get_neuron_values()]
     weights = layer.get_neuron_weights()
-    second_layer_values = matrix_multiply(first_layer_values, weights)
-    for i in range(len(second_layer_values[0])):
-        second_layer_values[0][i] = sigmoid(second_layer_values[0][i])
-    second_layer = od.Layer(len(second_layer_values[0]))
-    second_layer.initialize_neuron_values(second_layer_values)
-    return second_layer
+    new_layer_values = matrix_multiply(first_layer_values, weights)[0]
+    for j in range(len(new_layer_values)):
+        new_layer_values[j] += layer.get_bias_weights()[j]
+    for i in range(len(new_layer_values)):
+        new_layer_values[i] = sigmoid(new_layer_values[i])
+    new_layer = od.Layer(len(new_layer_values),layer)
+    new_layer.initialize_neuron_values(new_layer_values)
+    return new_layer
 
 def proto_cost_function(correct_number, layer, avg_or_not = "avg"):
-# assume expected_number is an int 0-9
+# assume correct_number is an int 0-9
     actual_activations = layer.get_neuron_values()
     expected_activation = [0,0,0,0,0,0,0,0,0,0]
     expected_activation[correct_number] = 1
@@ -54,3 +56,30 @@ def proto_cost_function(correct_number, layer, avg_or_not = "avg"):
         avg_cost = sum(cost_list) / 10
         return avg_cost
     return cost_list
+
+
+
+#before making a gradient descent function I think i need to make a function to find a specific neuron's desired
+    #change in the weights in order to minimize its specific cost
+    #function definitely needs a neuron argument, might need a cost argument, not sure if it needs a layer one
+
+
+#def find_gradient(neurons, weights):
+# given a list of neuron values and weights, we should be able to find the gradient function
+# the first layer should be easy, but the second layer relies on the first
+# this should probably be split into multiple functions
+
+
+
+
+#def hill_climb(idk):
+    #what even goes here as an argument?
+    #goal: minimize cost function by changing weights between neurons
+    #cost function value will just be a number between 0-1
+    #cost function variables will be the weights, coefficients will be value of neurons
+    #I guess the simplest version of hill_climb would select a random value to change each parameter by, and check if the cost function improved
+    #eg if changing weight x decreased the cost function, we would keep moving that way until it started increasing
+    #then change next weight, keep changing until that starts increasing, repeat
+    #not sure how well this would work in 1000+ dimensions though
+    #the weights should probably just be stored in a list
+
