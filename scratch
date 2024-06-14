@@ -50,3 +50,10 @@ Unfinished concepts:
         While gradient descent has not reached local minimum
             For each image in dataset, assign first layer values with image pixel values, run gradient descent function
                 This is one iteration (batch gradient descent)
+
+    More concise, easier to understand structure
+        Right now, the structure of the network technically works but its kinda convoluted and hard to follow
+        I want to basically have the layers stored as a (doubly?) linked list, so that I can easily see how each connects to the next
+        Then, I want to be able to kind of follow the weights to trace through the network
+            This would mean that the network would be a directed graph (K_l,m,n specifically)
+            However, I want to be able to traverse it in both directions
