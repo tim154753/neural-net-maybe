@@ -7,6 +7,7 @@
 import objectdefs as od
 import math
 
+output_list = [0,0,0,0,0,0,0,0,0,0]
 def matrix_multiply(m1,m2):
     num_rows_m1, num_cols_m1 = len(m1), len(m1[0])
     num_rows_m2, num_cols_m2 = len(m2), len(m2[0])
@@ -26,9 +27,12 @@ def relu(value):
     result = (abs(value)+value)/2.0
     return result
 
-def sigmoid(value):
+def sigmoid(value, derivative_or_not = "no"):
     result = math.e**value
     result = result/(1+math.e**value)
+    if derivative_or_not == "deriv":
+        deriv_result = sigmoid(value)*(1/1+math.e**value) #this weird equation is just a more efficient way of writing the derivative of e^x/(1+e^x), which ends up just being e^x/((1+e^x)^2)
+        return deriv_result
     return result
 
 def generate_next_layer(layer):
@@ -46,7 +50,7 @@ def generate_next_layer(layer):
 def proto_cost_function(correct_number, layer, avg_or_not = "avg"):
 # assume correct_number is an int 0-9
     actual_activations = layer.get_neuron_values()
-    expected_activation = [0,0,0,0,0,0,0,0,0,0]
+    expected_activation = output_list
     expected_activation[correct_number] = 1
     cost_list = []
     for i in range(10):
@@ -56,6 +60,23 @@ def proto_cost_function(correct_number, layer, avg_or_not = "avg"):
         avg_cost = sum(cost_list) / 10
         return avg_cost
     return cost_list
+
+def find_one_weight_gradient(input_neuron, output_neuron, correct_number):
+    specific_weight = input_neuron.weights[output_neuron.number]
+    #return f"Neuron {input_neuron.number} of layer {input_neuron.layer.layer_number} is connected to neuron {output_neuron.number} of layer {output_neuron.layer.layer_number} with a weight of {specific_weight}"\
+    new_list = output_list.copy()
+    new_list[correct_number] = 1
+    difference = output_neuron.value - new_list[output_neuron.number]
+    result = 2 * difference * sigmoid(input_neuron.value * specific_weight + input_neuron.layer.get_bias_weights()[input_neuron.number], "deriv") * input_neuron.value
+    #this comes from the formula for the partial derivative of the cost function of one neuron with respect to the neuron weight+value+bias it originates from
+    return result*-1
+
+def find_all_gradients(input_layer, output_layer, correct_number):
+    for neuron in input_layer.neurons:
+
+
+
+
 
 
 
@@ -82,4 +103,3 @@ def proto_cost_function(correct_number, layer, avg_or_not = "avg"):
     #then change next weight, keep changing until that starts increasing, repeat
     #not sure how well this would work in 1000+ dimensions though
     #the weights should probably just be stored in a list
-
