@@ -1,9 +1,10 @@
 import random
 class Neuron:
     neuron_count = 0
-    def __init__(self, value=0, weights=None, number = 0):
+    def __init__(self, value=0, weights=None, number = 0, layer = None):
         self.value = value
         self.number = number
+        self.layer = layer
         if weights is None:
             self.weights = []
         else:
@@ -28,7 +29,7 @@ class Neuron:
 class Layer:
     layer_count = 0
     def __init__(self, size, layer_connection = None):
-        self.neurons = [Neuron(number=i) for i in range(size)]
+        self.neurons = [Neuron(number=i, layer = self) for i in range(size)]
         self.layer_connection = layer_connection
         Layer.layer_count += 1
         self.layer_number = Layer.layer_count
@@ -70,5 +71,4 @@ class Layer:
 
     def get_bias_weights(self):
         return self.bias.weights
-
 
