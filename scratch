@@ -1,0 +1,52 @@
+What we have:
+    'Neuron' object containing the neuron's value and the weights of its connections to the next layer
+        Has methods to initialize/randomize/ return value, weights
+            Needs a method to set weights to specific values given list
+    'Layer' object containing a list of neurons and a connection to the previous layer
+        Has methods to batch return/initialize/randomize values/weights for each neuron in the list
+            Needs a method to set values/weights of each neuron given an argument
+    Matrix multiplication function
+    Layer generation function that generates the values of the next layer given the previous one
+        Assumes it too has values and weights of proper dimensions
+        Assigns next layer with connection to layer used in its generation (previous layer)
+    Cost function calculation function
+        Can return average cost over all neurons or specific cost per neuron
+
+What we need:
+    Gradient descent function
+        Needs to create a list of values to change each weight by
+    Function to read image input
+        Image will be converted to array containing each grayscale pixel value (0-1) in order
+        Not sure how to do this yet, will do this last
+    'Neuron' class method to give a neuron specific weights given an input
+        Maybe not actually
+            If they start randomized, we'll never be setting them to specific values; the existing weights will only be updated
+            each iteration using gradient descent, and we can already iterate through the neuron's weights
+        Still probably good to make a weights_update function that adds the desired change in weights to the current weights
+
+Unfinished concepts:
+    Gradient descent
+        Not sure how this will work exactly
+            Using the partial derivative formula, I guess we make the gradient vector using the result of that formula for each weight
+                This makes sense with the first layer of neurons, but the second is kind of a function of the first (if the first layer weights are changed,
+                the second layer values will change, which means that the second layer weights will probably need to change too) so I'm not sure how to
+                make that work
+        What does it need to know
+            Cost of each sub-iteration (one image in dataset), all weights, all values
+                Maybe something like matrix(layer1 values) * matrix(layer1 weights) = matrix(layer2 values)
+                --> matrix(layer2 values) * matrix(layer2 weights) = matrix(layer3 values), from that we get the cost function
+                --> matrix(layer 3 values) = matrix(layer1 values)*matrix(layer1 weights)*matrix(layer2 weights)
+                Then the final cost function is in only in terms of values we know from the beginning and can be changed
+    Bias
+        *Seems like it can be implemented per neuron (same for each neuron) or as a pseudo-neuron added to each layer with value 1
+        and different weights per connection
+            Both should do the same thing
+
+         Bias has been implemented as an attribute of each Layer class as an extra Neuron not contained in layer.neurons.
+    Iterations
+        There's no way the whole training process will be contained in a for loop, right?
+        (Very)Pseudocode
+            Initialize layers with random weights
+        While gradient descent has not reached local minimum
+            For each image in dataset, assign first layer values with image pixel values, run gradient descent function
+                This is one iteration (batch gradient descent)
