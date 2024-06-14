@@ -5,8 +5,8 @@
 
 #make sure len(each row) of m1 = len(column) of m2 = len(m2)
 import objectdefs as od
-import math
 
+e = 2.718281828459045
 output_list = [0,0,0,0,0,0,0,0,0,0]
 def matrix_multiply(m1,m2):
     num_rows_m1, num_cols_m1 = len(m1), len(m1[0])
@@ -28,10 +28,10 @@ def relu(value):
     return result
 
 def sigmoid(value, derivative_or_not = "no"):
-    result = math.e**value
-    result = result/(1+math.e**value)
+    result = e**value
+    result = result/(1+e**value)
     if derivative_or_not == "deriv":
-        deriv_result = sigmoid(value)*(1/1+math.e**value) #this weird equation is just a more efficient way of writing the derivative of e^x/(1+e^x), which ends up just being e^x/((1+e^x)^2)
+        deriv_result = sigmoid(value)*(1/1+e**value) #this weird equation is just a more efficient way of writing the derivative of e^x/(1+e^x), which ends up just being e^x/((1+e^x)^2)
         return deriv_result
     return result
 
