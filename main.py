@@ -24,7 +24,5 @@ print(layer3)
 error = mf.proto_cost_function(1, layer3, "avg")
 print(error)
 
-
-
-
-
+x = mf.find_one_weight_gradient(layer2.neurons[0], layer3.neurons[0],1)
+print(f"\n {x}")
