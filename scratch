@@ -51,9 +51,21 @@ Unfinished concepts:
             For each image in dataset, assign first layer values with image pixel values, run gradient descent function
                 This is one iteration (batch gradient descent)
 
-    More concise, easier to understand structure
-        Right now, the structure of the network technically works but its kinda convoluted and hard to follow
-        I want to basically have the layers stored as a (doubly?) linked list, so that I can easily see how each connects to the next
-        Then, I want to be able to kind of follow the weights to trace through the network
-            This would mean that the network would be a directed graph (K_l,m,n specifically)
-            However, I want to be able to traverse it in both directions
+Backpropagation (very)pseudocode
+    1. Find "errors" (derivatives of cost function w/ respect to weighted sum of each neuron) of output layer using formula
+            - Store these errors in an array, one entry for each neuron in output layer (call it output_error_list)
+    2. Find errors of previous layers using other formula (given next layer error, start with 2nd to last layer with error from step 1)
+            - Uses transpose of weight matrix and derivative of sigmoid of weighted sums for layer we're interested in
+            - Store these errors in an array too, call it layer(n-1)_error_list
+            - For loop to iterate over all layers
+                - First iteration uses output_layer_list, next uses layer(n-1)_error_list, next uses layer(n-2)_error_list, etc until reaching first layer
+            - All error arrays must be stored in separate variables
+    3. From those error arrays, use formulas to find partial derivative of cost function with respect to weights and biases given those arrays, activations of previous layer neurons
+            - Fairly straightforward
+            - Iterate through all error lists (should be one for each layer), storing resulting weight/bias gradients in new lists
+    4. Repeat this process for all samples in training set (batch gradient descent), find averages of resulting weight/bias gradient vectors components
+    5. Add the negative of the resulting average gradient vectors to the current weight/bias arrays for each neuron, multiplied by arbitrary constant (learning rate)
+            - These updated weights/biases are the new ones for the model, meaning that they will be used for the next iteration
+    6. Repeat this until training doesn't improve network accuracy (meaning function has reached local minimum), or maybe for arbitrary number of iterations
+    7. Done?
+
