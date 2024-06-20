@@ -1,11 +1,4 @@
-#first, algorithm to multiply matrices
-#ex m1 = [[1,2,3],  m2 = [[9,3],
-#         [4,5,6],        [8,4],
-#         [7,8,9]]        [7,5]]
-
-#make sure len(each row) of m1 = len(column) of m2 = len(m2)
 import objectdefs as od
-
 e = 2.718281828459045
 output_list = [0,0,0,0,0,0,0,0,0,0]
 def matrix_multiply(m1,m2):
@@ -35,18 +28,6 @@ def sigmoid(value, derivative_or_not = "no"):
         return deriv_result
     return result
 
-def generate_next_layer(layer):
-    first_layer_values = [layer.get_neuron_values()]
-    weights = layer.get_neuron_weights()
-    new_layer_values = matrix_multiply(first_layer_values, weights)[0]
-    for j in range(len(new_layer_values)):
-        new_layer_values[j] += layer.get_bias_weights()[j]
-    for i in range(len(new_layer_values)):
-        new_layer_values[i] = sigmoid(new_layer_values[i])
-    new_layer = od.Layer(len(new_layer_values),layer)
-    new_layer.initialize_neuron_values(new_layer_values)
-    return new_layer
-
 def proto_cost_function(correct_number, layer, avg_or_not = "avg"):
 # assume correct_number is an int 0-9
     actual_activations = layer.get_neuron_values()
@@ -61,6 +42,15 @@ def proto_cost_function(correct_number, layer, avg_or_not = "avg"):
         return avg_cost
     return cost_list
 
+def transpose(matrix):
+    result = []
+    for i in range(len(matrix[0])):
+        result.append([])
+        for j in range(len(matrix)):
+            result[i].append(matrix[j][i])
+    return result
+
+
 def find_one_weight_gradient(input_neuron, output_neuron, correct_number):
     specific_weight = input_neuron.weights[output_neuron.number]
     #return f"Neuron {input_neuron.number} of layer {input_neuron.layer.layer_number} is connected to neuron {output_neuron.number} of layer {output_neuron.layer.layer_number} with a weight of {specific_weight}"\
@@ -71,35 +61,55 @@ def find_one_weight_gradient(input_neuron, output_neuron, correct_number):
     #this comes from the formula for the partial derivative of the cost function of one neuron with respect to the neuron weight+value+bias it originates from
     return result*-1
 
-def find_all_gradients(input_layer, output_layer, correct_number):
-    for neuron in input_layer.neurons:
+def add_lists(list1, list2):
+    #assumes they are the same size, changes list1
+    for i in range(len(list1)):
+        list1[i] += list2[i]
+    return list1
 
+def hadamard_product(matrix1, matrix2):
+    #assumes they are the same size
+    result = []
+    for i in range(len(matrix1)):
+        result.append(matrix1[i]*matrix2[i])
+    return result
 
+def find_weight_gradient(error_matrix, prev_layer):
+    weight_gradient = []
+    for error, i in zip(error_matrix, range(len(error_matrix))):
+        weight_gradient.append([])
+        for neuron in prev_layer.neurons:
+            weight_gradient_component = neuron.value * error
+            # each prev_layer neuron value is multiplied by the same output_error value
+            # means that final form of gradient will be (if prev_layer has k neurons, output has j neurons) [[x(0,0), x(0, 1), x(0,2) ... x(0,k)], [x(1,0) ... x(1,k)] ... ... [x(j, 0), x(j, 1) ... x(j,k)]]
+            weight_gradient[i].append(weight_gradient_component)
+    return weight_gradient
 
+def find_output_layer_error(network, correct_values):
+    #cost function is quadratic -- C = 1/2(a-y)^2
+    #first find partial derivative of cost function w/ respect to activation = (a-y)
+    #will be easier to do this calculation in matrix form
+    output_error_list = []
+    output_layer = network.layer_list[len(network.layer_list)-1] #returns last layer given network
+    for neuron in output_layer.neurons:
+        difference = neuron.value - correct_values[neuron.number]
+        output_error_list.append(difference * sigmoid(neuron.weighted_input, "deriv"))
+        #assumes correct_values is the same size as the output layer of neurons and is in the correct order to match up with those neurons
+        #this comes from the formula for the error (partial deriv w/ respect to z) of the output layer
+        #at this point, we should have a list containing the error values for each neuron in the output layer
+    return output_error_list
 
-
-
-
-#before making a gradient descent function I think i need to make a function to find a specific neuron's desired
-    #change in the weights in order to minimize its specific cost
-    #function definitely needs a neuron argument, might need a cost argument, not sure if it needs a layer one
-
-
-#def find_gradient(neurons, weights):
-# given a list of neuron values and weights, we should be able to find the gradient function
-# the first layer should be easy, but the second layer relies on the first
-# this should probably be split into multiple functions
-
-
-
-
-#def hill_climb(idk):
-    #what even goes here as an argument?
-    #goal: minimize cost function by changing weights between neurons
-    #cost function value will just be a number between 0-1
-    #cost function variables will be the weights, coefficients will be value of neurons
-    #I guess the simplest version of hill_climb would select a random value to change each parameter by, and check if the cost function improved
-    #eg if changing weight x decreased the cost function, we would keep moving that way until it started increasing
-    #then change next weight, keep changing until that starts increasing, repeat
-    #not sure how well this would work in 1000+ dimensions though
-    #the weights should probably just be stored in a list
+def find_error_from_next_layer(network, layer, next_layer_error):
+    weight_matrix = layer.get_neuron_weights()
+    print(f"This is the weight matrix: \n{weight_matrix}")
+    weight_matrix = transpose(weight_matrix)
+    print(f"This is the transpose of the weight matrix: \n{weight_matrix}")
+    intermediate_value = matrix_multiply(weight_matrix, next_layer_error)
+    print(f"Int value is {intermediate_value}")
+    layer_weighted_inputs = layer.get_weighted_inputs()
+    deriv_sigmoid_weighted_input_matrix = []
+    for z in layer_weighted_inputs:
+        deriv_sigmoid_weighted_input_matrix.append(sigmoid(z, "deriv"))
+    layer_error = hadamard_product(intermediate_value, deriv_sigmoid_weighted_input_matrix)
+    return layer_error
+    # this is all from the formula to find the error matrix of a layer given the error matrix of the next layer
