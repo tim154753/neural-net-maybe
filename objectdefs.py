@@ -45,17 +45,18 @@ class Layer:
     def __init__(self, size, layer_connection = None):
         self.neurons = [Neuron(number=i, layer = self) for i in range(size)]
         self.layer_connection = layer_connection
-        Layer.layer_count += 1
         self.layer_number = Layer.layer_count
+        Layer.layer_count += 1
         self.bias = Neuron(0.0001)
         self.number_of_connections = 0
         self.error = []
         self.weight_gradient = []
         self.bias_gradient = []
+        self.weights = []
 
     def __str__(self):
-        x = f"originates from layer {self.layer_connection.layer_number-1} " if self.layer_connection is not None else 'is the first layer '
-        str = f"Layer {self.layer_number-1} {x}and consists of the following neurons:\n"
+        x = f"originates from layer {self.layer_connection.layer_number} " if self.layer_connection is not None else 'is the first layer '
+        str = f"Layer {self.layer_number} {x}and consists of the following neurons:\n"
         i=1
         for neuron in self.neurons:
             str += f"   Neuron {neuron.number} has a value of {neuron.value} and the following list of weights:\n   {neuron.weights}\n"
@@ -103,11 +104,23 @@ class Layer:
     def assign_error(self, error):
         self.error.append(error)
 
+    def update_layer_weights(self):
+        for i in range(len(self.neurons)):
+            for j in range(len(self.weight_gradient)):
+                step = self.weight_gradient[j][i] * -1 * Network.LEARNING_RATE
+                self.neurons[i].weights[j] += step
+    def update_bias_weights(self):
+        for i in range(len(self.bias.weights)):
+            step = self.bias_gradient[i] * -1 * Network.LEARNING_RATE
+            self.bias.weights[i] += step
+
 class Network:
-    def __init__(self, input_layer = None, size = 0):
+    LEARNING_RATE = 1
+    def __init__(self, learning_rate = 1, input_layer = None, size = 0):
         self.layer_list = []
         self.initial_layer = input_layer
         self.size = size
+        Network.LEARNING_RATE = learning_rate
 
     def __str__(self):
         result =  f"This network has {self.size} layers."
@@ -154,11 +167,38 @@ class Network:
             self.layer_list[i].bias_gradient = self.layer_list[i].error[0]
         #at this point, each layer should have its weight and bias gradients set
 
-    def train_network(self, number_of_iterations, correct_values):
-        for i in range(number_of_iterations):
-            self.backprop(correct_values)
 
+    def recursive_backprop(self, correct_values, layer = None):
+        if layer is None:
+            layer = self.layer_list[0]            
+        if(layer==self.layer_list[-1]):
+            output_error = mf.find_output_layer_error(self, correct_values)
+            self.layer_list[-1].error = output_error
+            return output_error
+        print(layer)
+        print(self.layer_list[layer.layer_number + 1])
+        #next_layer_error = self.layer_list[layer.layer_number+1].error
+        layer.error = mf.find_error_from_next_layer(layer, self.recursive_backprop(correct_values, self.layer_list[layer.layer_number + 1]))
+        print(f"From recursive_backprop: This is layer {layer.layer_number}'s error matrix \n{layer.error}")
+        layer.weight_gradient = mf.find_weight_gradient(self.layer_list[layer.layer_number+1].error, layer)
+        print(f"From recursive_backprop: This is layer {layer.layer_number}'s weight gradient: \n {layer.weight_gradient}")
+        print(f"From recursive_backprop: This is layer {layer.layer_number+1}'s error matrix: \n{self.layer_list[layer.layer_number+1].error}")
+        layer.bias_gradient = self.layer_list[layer.layer_number + 1].error
+        return layer.error
 
-
-
-
+    def batch_gradient_descent(self, labels):
+        average_weight_gradient = []
+        average_bias_gradient = []
+        for i in range(len(labels)):
+            self.recursive_backprop(labels[i])
+            for j in range(len(self.layer_list)):
+                average_weight_gradient.append([])
+                average_bias_gradient.append([])
+                average_weight_gradient[j] += mf.constant_multiply_matrix(len(labels), self.layer_list[j].weight_gradient)
+                average_bias_gradient[j] += mf.constant_multiply_matrix(len(labels), self.layer_list[j].bias_gradient)
+        for k in range(len(self.layer_list)):
+            self.layer_list[k].weight_gradient = average_weight_gradient[k]
+            self.layer_list[k].bias_gradient = average_bias_gradient[k]
+            self.layer_list[k].update_layer_weights()
+            self.layer_list[k].update_bias_weights()
+        #label must be an array of 10 numbers, all zero, with the correct number index corresponding to the image as 1
