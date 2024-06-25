@@ -1,4 +1,5 @@
 import objectdefs as od
+import copy
 e = 2.718281828459045
 output_list = [0,0,0,0,0,0,0,0,0,0]
 def matrix_multiply(m1,m2):
@@ -71,15 +72,17 @@ def hadamard_product(matrix1, matrix2):
     #assumes they are the same size
     result = []
     for i in range(len(matrix1)):
-        result.append(matrix1[i]*matrix2[i])
+        for j in range(len(matrix1[0])):
+            result.append(matrix1[i][j] * matrix2[i][j])
     return result
 
 def find_weight_gradient(error_matrix, prev_layer):
+    print(f"This is the error matrix of layer {prev_layer.layer_number + 1}: \n {error_matrix}")
     weight_gradient = []
-    for error, i in zip(error_matrix, range(len(error_matrix))):
+    for i in range(len(error_matrix)):
         weight_gradient.append([])
         for neuron in prev_layer.neurons:
-            weight_gradient_component = neuron.value * error
+            weight_gradient_component = neuron.value * error_matrix[i]
             # each prev_layer neuron value is multiplied by the same output_error value
             # means that final form of gradient will be (if prev_layer has k neurons, output has j neurons) [[x(0,0), x(0, 1), x(0,2) ... x(0,k)], [x(1,0) ... x(1,k)] ... ... [x(j, 0), x(j, 1) ... x(j,k)]]
             weight_gradient[i].append(weight_gradient_component)
@@ -90,7 +93,7 @@ def find_output_layer_error(network, correct_values):
     #first find partial derivative of cost function w/ respect to activation = (a-y)
     #will be easier to do this calculation in matrix form
     output_error_list = []
-    output_layer = network.layer_list[len(network.layer_list)-1] #returns last layer given network
+    output_layer = network.layer_list[-1] #returns last layer given network
     for neuron in output_layer.neurons:
         difference = neuron.value - correct_values[neuron.number]
         output_error_list.append(difference * sigmoid(neuron.weighted_input, "deriv"))
@@ -99,17 +102,40 @@ def find_output_layer_error(network, correct_values):
         #at this point, we should have a list containing the error values for each neuron in the output layer
     return output_error_list
 
-def find_error_from_next_layer(network, layer, next_layer_error):
+def find_error_from_next_layer(layer, next_layer_error):
     weight_matrix = layer.get_neuron_weights()
+    print(f"Currently finding error for layer {layer.layer_number}")
     print(f"This is the weight matrix: \n{weight_matrix}")
+    print(f"This is next_layer_error: \n{next_layer_error}")
     weight_matrix = transpose(weight_matrix)
     print(f"This is the transpose of the weight matrix: \n{weight_matrix}")
-    intermediate_value = matrix_multiply(weight_matrix, next_layer_error)
+    intermediate_value = matrix_multiply([next_layer_error], weight_matrix)
     print(f"Int value is {intermediate_value}")
     layer_weighted_inputs = layer.get_weighted_inputs()
-    deriv_sigmoid_weighted_input_matrix = []
+    print(f"This is layer_weighted_inputs {layer_weighted_inputs}")
+    deriv_sigmoid_weighted_input_matrix = [[]]
     for z in layer_weighted_inputs:
-        deriv_sigmoid_weighted_input_matrix.append(sigmoid(z, "deriv"))
+        deriv_sigmoid_weighted_input_matrix[0].append(sigmoid(z, "deriv"))
+    print(f"This is deriv_sigmoid_weighted_input_matrix: {deriv_sigmoid_weighted_input_matrix}")
     layer_error = hadamard_product(intermediate_value, deriv_sigmoid_weighted_input_matrix)
+    print(f"This is layer_error: {layer_error}")
     return layer_error
     # this is all from the formula to find the error matrix of a layer given the error matrix of the next layer
+
+def constant_multiply_matrix(constant, matrix):
+    result = copy.deepcopy(matrix)
+    for i in range(len(matrix)):
+        for j in range(len(matrix[0])):
+            result[i][j] = result[i][j]*constant
+    return result
+
+def read_image(image_number):
+    file = open("C:/Users/timma/Downloads/MNIST_ORG/train-images.idx3-ubyte", mode = "r+b")
+    file.seek(16 + image_number*784)
+    test = []
+    for i in range(784):
+        #input_layer[i].value = file.read[i]
+        byte = file.read(1)
+        value = int.from_bytes(byte, byteorder='big')
+        test.append(value)
+    print(test)
