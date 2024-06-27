@@ -37,7 +37,7 @@ class Neuron:
     def get_weighted_input(self):
         return self.weighted_input
 
-    def initialize_value(self, value):
+    def assign_value(self, value):
         self.value = value
 
 class Layer:
@@ -70,18 +70,19 @@ class Layer:
     def initialize_neuron_connections(self, number_of_connections):
         for neuron in self.neurons:
             neuron.initialize_weights(number_of_connections)
-        print(f"The neurons (and bias) in layer {self.layer_number} have now been initialized with weights of {[0 for i in range(number_of_connections)]}")
+        #print(f"The neurons (and bias) in layer {self.layer_number} have now been initialized with weights of {[0 for i in range(number_of_connections)]}")
         self.number_of_connections = number_of_connections
         self.bias.initialize_weights(number_of_connections)
 
-    def initialize_neuron_values(self, list_of_values):
+    def assign_neuron_values(self, list_of_values):
         for neuron, value in zip(self.neurons, list_of_values):
             neuron.value = value
 
     def assign_weighted_inputs(self, weighted_inputs):
         for neuron, z in zip(self.neurons, weighted_inputs):
-            print(f"\nAssigning neuron {neuron.number} of layer {self.layer_number} with a weighted input of {z}!")
+            #print(f"\nAssigning neuron {neuron.number} of layer {self.layer_number} with a weighted input of {z}!")
             neuron.assign_weighted_input(z)
+
 
     def randomize_bias_weights(self):
         self.bias.randomize_weights()
@@ -106,6 +107,8 @@ class Layer:
 
     def update_layer_weights(self):
         for i in range(len(self.neurons)):
+            print(f"From update_layer_weights: The current weight matrix of layer {self.layer_number} is \n{self.get_neuron_weights()}\n")
+            print(f"From update_layer_weights: The current weight gradient matrix of layer {self.layer_number} is \n{self.weight_gradient}\n")
             for j in range(len(self.weight_gradient)):
                 step = self.weight_gradient[j][i] * -1 * Network.LEARNING_RATE
                 self.neurons[i].weights[j] += step
@@ -143,13 +146,13 @@ class Network:
         for j in range(len(new_layer_values)):
             new_layer_values[j] += layer.get_bias_weights()[j]
             new_layer_weighted_inputs.append(new_layer_values[j])
-            print(f"Adding {new_layer_values[j]} onto the list of weighted inputs!")
+            #print(f"Adding {new_layer_values[j]} onto the list of weighted inputs!")
             new_layer_values[j] = mf.sigmoid(new_layer_values[j])
-        print(f"\nThe list of weighted inputs for this new layer is now {new_layer_weighted_inputs}!")
+        #print(f"\nThe list of weighted inputs for this new layer is now {new_layer_weighted_inputs}!")
         new_layer = Layer(len(new_layer_values), layer)
-        new_layer.initialize_neuron_values(new_layer_values)
+        new_layer.assign_neuron_values(new_layer_values)
         new_layer.assign_weighted_inputs(new_layer_weighted_inputs)
-        self.layer_list.append(new_layer)
+        return new_layer
 
     def backprop(self, correct_values):
         output_layer = self.layer_list[len(self.layer_list) - 1]
@@ -175,30 +178,44 @@ class Network:
             output_error = mf.find_output_layer_error(self, correct_values)
             self.layer_list[-1].error = output_error
             return output_error
-        print(layer)
-        print(self.layer_list[layer.layer_number + 1])
+        #print(layer)
+        #print(self.layer_list[layer.layer_number + 1])
         #next_layer_error = self.layer_list[layer.layer_number+1].error
         layer.error = mf.find_error_from_next_layer(layer, self.recursive_backprop(correct_values, self.layer_list[layer.layer_number + 1]))
-        print(f"From recursive_backprop: This is layer {layer.layer_number}'s error matrix \n{layer.error}")
+        #print(f"From recursive_backprop: This is layer {layer.layer_number}'s error matrix \n{layer.error}")
         layer.weight_gradient = mf.find_weight_gradient(self.layer_list[layer.layer_number+1].error, layer)
-        print(f"From recursive_backprop: This is layer {layer.layer_number}'s weight gradient: \n {layer.weight_gradient}")
-        print(f"From recursive_backprop: This is layer {layer.layer_number+1}'s error matrix: \n{self.layer_list[layer.layer_number+1].error}")
+        #print(f"From recursive_backprop: This is layer {layer.layer_number}'s weight gradient: \n {layer.weight_gradient}")
+        #print(f"From recursive_backprop: This is layer {layer.layer_number+1}'s error matrix: \n{self.layer_list[layer.layer_number+1].error}")
         layer.bias_gradient = self.layer_list[layer.layer_number + 1].error
         return layer.error
 
     def batch_gradient_descent(self, labels):
         average_weight_gradient = []
         average_bias_gradient = []
+        for layer in self.layer_list:
+            average_weight_gradient.append([0 for i in range(len(layer.get_neuron_weights()))])
+            average_bias_gradient.append([0 for i in range(len(layer.get_neuron_weights()))])
+        print(f"From batch_gradient_descent: This is average weight gradient: \n{average_weight_gradient}\n")
+        print(f"From batch_gradient_descent: This is average bias gradient: \n{average_bias_gradient}")
         for i in range(len(labels)):
+            mf.read_image(self.layer_list[0], i)
+            self.regenerate_network()
             self.recursive_backprop(labels[i])
             for j in range(len(self.layer_list)):
-                average_weight_gradient.append([])
-                average_bias_gradient.append([])
-                average_weight_gradient[j] += mf.constant_multiply_matrix(len(labels), self.layer_list[j].weight_gradient)
-                average_bias_gradient[j] += mf.constant_multiply_matrix(len(labels), self.layer_list[j].bias_gradient)
+                mf.add_lists(average_weight_gradient[j], mf.constant_multiply_matrix(1/len(labels), self.layer_list[j].weight_gradient))
+                mf.add_lists(average_bias_gradient[j], mf.constant_multiply_matrix(1/len(labels), self.layer_list[j].bias_gradient))
+                #average_weight_gradient[j] += mf.constant_multiply_matrix(1/len(labels), self.layer_list[j].weight_gradient)
+                #average_bias_gradient[j] += mf.constant_multiply_matrix(1/len(labels), [self.layer_list[j].bias_gradient])
         for k in range(len(self.layer_list)):
             self.layer_list[k].weight_gradient = average_weight_gradient[k]
             self.layer_list[k].bias_gradient = average_bias_gradient[k]
             self.layer_list[k].update_layer_weights()
             self.layer_list[k].update_bias_weights()
         #label must be an array of 10 numbers, all zero, with the correct number index corresponding to the image as 1
+
+    def regenerate_network(self):
+        #assumes batch_gradient_descent has already been run
+        for layer in self.layer_list[1:]:
+            layer.assign_neuron_values(self.generate_next_layer(self.layer_list[layer.layer_number-1]).get_neuron_values())
+
+
