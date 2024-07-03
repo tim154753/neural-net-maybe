@@ -1,5 +1,5 @@
 import objectdefs as od
-import copy
+import random
 e = 2.718281828459045
 output_list = [0,0,0,0,0,0,0,0,0,0]
 def matrix_multiply(m1,m2):
@@ -28,20 +28,25 @@ def sigmoid(value, derivative_or_not = "no"):
         return deriv_result
     return result
 
-def proto_cost_function(correct_number, layer, avg_or_not = "avg"):
+def proto_cost_function(correct_output, layer, avg_or_not = "avg"):
 # assume correct_number is an int 0-9
     actual_activations = layer.get_neuron_values()
-    expected_activation = output_list
-    expected_activation[correct_number] = 1
     cost_list = []
     for i in range(10):
-        cost = pow(actual_activations[i]-expected_activation[i],2)
+        cost = pow(actual_activations[i]-correct_output[i],2)
         cost_list.append(cost)
     if avg_or_not == "avg":
         avg_cost = sum(cost_list) / 10
         return avg_cost
     return cost_list
 
+def is_correct(correct_output, output_layer):
+    expected = correct_output
+    should_be_highest = output_layer.get_neuron_values()[expected]
+    for value in output_layer.get_neuron_values():
+        if value > should_be_highest:
+            return False
+    return True
 def transpose(matrix):
     result = []
     for i in range(len(matrix[0])):
@@ -67,6 +72,11 @@ def add_lists(list1, list2):
         list1[i] += list2[i]
     return list1
 
+def recursive_add_lists(list1, list2):
+    if not isinstance(list1, list) or not isinstance(list2, list):
+        return list1 + list2
+    else:
+        return [recursive_add_lists(l1, l2) for l1, l2 in zip(list1, list2)]
 def hadamard_product(matrix1, matrix2):
     #assumes they are the same size
     result = []
@@ -121,27 +131,44 @@ def find_error_from_next_layer(layer, next_layer_error):
     return layer_error
     # this is all from the formula to find the error matrix of a layer given the error matrix of the next layer
 
-def constant_multiply_matrix(constant, matrix):
+'''def constant_multiply_matrix(constant, matrix):
     result = copy.deepcopy(matrix)
     for i in range(len(matrix)):
         for j in range(len(matrix[0])):
             result[i][j] = result[i][j]*constant
     return result
+'''
+def recursive_const_mult_matrix(constant, matrix):
+    if not isinstance(matrix, list):
+        return matrix*constant
+    else:
+        return[recursive_const_mult_matrix(constant, sublist) for sublist in matrix]
+
+def deepcopy(array):
+    if not isinstance(array, list):
+        return array
+    else:
+        return [deepcopy(array[i]) for i in range(len(array))]
 
 def read_image(input_layer, image_number):
     file = open("C:/Users/timma/Downloads/MNIST_ORG/train-images.idx3-ubyte", mode = "r+b")
-    file.seek(16 + image_number*784)
+    file.seek(16 + image_number*784) #change back to 16+ ...
     test = []
-    for i in range(10): #change back to 784
+    for i in range(len(input_layer.neurons)): #change back to 784
         byte = file.read(1)
         value = (int.from_bytes(byte, byteorder='big'))/255
         input_layer.neurons[i].value = sigmoid(value)
-
-def read_label(label_number):
+        #input_layer.neurons[i].value = 1
+def read_label(label_number, return_type = "list"):
     correct_output_list = [0,0,0,0,0,0,0,0,0,0]
     file = open("C:/Users/timma/Downloads/MNIST_ORG/train-labels.idx1-ubyte", mode = "r+b")
     file.seek(8+label_number)
     value = int.from_bytes(file.read(1), byteorder='big')
+    if return_type == "num":
+        return value
     correct_output_list[value] = 1
     return correct_output_list
 
+def to_file(values, path):
+    file = open(path, mode = 'w')
+    file.write(values)
