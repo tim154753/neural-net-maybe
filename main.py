@@ -35,14 +35,14 @@ count = 0
 
 print(network.layer_list[2])
 
-for i in range(500):
+for i in range(1000):
     test_label = mf.read_label(i+10000)
     mf.read_image(network.layer_list[0], i+10000)
     network.regenerate_network()
     if mf.is_correct(mf.read_label(i+10000, "num"), network.layer_list[2]):
         count += 1
-    avg_cost += 1/500 * mf.proto_cost_function(test_label, network.layer_list[2], "avg")
+    avg_cost += 1/1000 * mf.proto_cost_function(test_label, network.layer_list[2], "avg")
 
 print(f"Average cost over 500 samples is: {avg_cost}")
-print(f"Classified {count} images correctly out of 500 -> {count/5}% accuracy")
+print(f"Classified {count} images correctly out of 100 -> {count/10}% accuracy")
 
