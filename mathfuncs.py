@@ -113,31 +113,16 @@ def find_output_layer_error(network, correct_values):
 
 def find_error_from_next_layer(layer, next_layer_error):
     weight_matrix = layer.get_neuron_weights()
-    #print(f"Currently finding error for layer {layer.layer_number}")
-    #print(f"This is the weight matrix: \n{weight_matrix}")
-    #print(f"This is next_layer_error: \n{next_layer_error}")
     weight_matrix = transpose(weight_matrix)
-    #print(f"This is the transpose of the weight matrix: \n{weight_matrix}")
     intermediate_value = matrix_multiply([next_layer_error], weight_matrix)
-    #print(f"Int value is {intermediate_value}")
     layer_weighted_inputs = layer.get_weighted_inputs()
-    #print(f"This is layer_weighted_inputs {layer_weighted_inputs}")
     deriv_sigmoid_weighted_input_matrix = [[]]
     for z in layer_weighted_inputs:
         deriv_sigmoid_weighted_input_matrix[0].append(sigmoid(z, "deriv"))
-    #print(f"This is deriv_sigmoid_weighted_input_matrix: {deriv_sigmoid_weighted_input_matrix}")
     layer_error = hadamard_product(intermediate_value, deriv_sigmoid_weighted_input_matrix)
-    #print(f"This is layer_error: {layer_error}")
     return layer_error
     # this is all from the formula to find the error matrix of a layer given the error matrix of the next layer
 
-'''def constant_multiply_matrix(constant, matrix):
-    result = copy.deepcopy(matrix)
-    for i in range(len(matrix)):
-        for j in range(len(matrix[0])):
-            result[i][j] = result[i][j]*constant
-    return result
-'''
 def recursive_const_mult_matrix(constant, matrix):
     if not isinstance(matrix, list):
         return matrix*constant
@@ -151,7 +136,7 @@ def deepcopy(array):
         return [deepcopy(array[i]) for i in range(len(array))]
 
 def read_image(input_layer, image_number):
-    file = open("C:/Users/timma/Downloads/MNIST_ORG/train-images.idx3-ubyte", mode = "r+b")
+    file = open(path, mode = "r+b") #path should be set to the path of the image set file
     file.seek(16 + image_number*784) #change back to 16+ ...
     test = []
     for i in range(len(input_layer.neurons)): #change back to 784
@@ -161,7 +146,7 @@ def read_image(input_layer, image_number):
         #input_layer.neurons[i].value = 1
 def read_label(label_number, return_type = "list"):
     correct_output_list = [0,0,0,0,0,0,0,0,0,0]
-    file = open("C:/Users/timma/Downloads/MNIST_ORG/train-labels.idx1-ubyte", mode = "r+b")
+    file = open(path, mode = "r+b") #path should be set to the path of the label set file
     file.seek(8+label_number)
     value = int.from_bytes(file.read(1), byteorder='big')
     if return_type == "num":
