@@ -136,7 +136,7 @@ def deepcopy(array):
         return [deepcopy(array[i]) for i in range(len(array))]
 
 def read_image(input_layer, image_number):
-    file = open(path, mode = "r+b") #path should be set to the path of the image set file
+    file = open("C:/Users/timma/Downloads/MNIST_ORG/train-images.idx3-ubyte", mode = "r+b")
     file.seek(16 + image_number*784) #change back to 16+ ...
     test = []
     for i in range(len(input_layer.neurons)): #change back to 784
@@ -146,7 +146,7 @@ def read_image(input_layer, image_number):
         #input_layer.neurons[i].value = 1
 def read_label(label_number, return_type = "list"):
     correct_output_list = [0,0,0,0,0,0,0,0,0,0]
-    file = open(path, mode = "r+b") #path should be set to the path of the label set file
+    file = open("C:/Users/timma/Downloads/MNIST_ORG/train-labels.idx1-ubyte", mode = "r+b")
     file.seek(8+label_number)
     value = int.from_bytes(file.read(1), byteorder='big')
     if return_type == "num":
