@@ -1,10 +1,5 @@
 import random
 import mathfuncs as mf
-import concurrent.futures as cf
-import os
-import threading
-import multiprocessing
-import copy
 class Neuron:
     neuron_count = 0
     def __init__(self, value=0, weights=None, number = 0, layer = None):
@@ -196,58 +191,6 @@ class Network:
         for k in range(len(self.layer_list)):
             self.layer_list[k].weight_gradient = average_weight_gradient[k]
             self.layer_list[k].bias_gradient = average_bias_gradient[k]
-            self.layer_list[k].update_layer_weights()
-            self.layer_list[k].update_bias_weights()
-
-
-    def multithread_batch_gradient_descent(self, labels, start_num, queue):
-        start_weight_grad = []
-        start_bias_grad = []
-        for layer, i in zip(self.layer_list, range(len(self.layer_list))):
-            start_weight_grad.append([])
-            start_bias_grad.append(layer.get_bias_weights())
-            transpose_weights = mf.transpose(layer.get_neuron_weights())
-            for j in range(len(transpose_weights)):
-                start_weight_grad[i].append(transpose_weights[j])
-        average_weight_gradient = start_weight_grad
-        average_bias_gradient = start_bias_grad
-        #print(f"\nRunning batch_gradient_descent on images {start_num} through {start_num+len(labels)}!\n")
-        for i in range(len(labels)):
-            mf.read_image(self.layer_list[0], i+start_num)
-            self.regenerate_network()
-            self.recursive_backprop(labels[i])
-            for j in range(len(self.layer_list)):
-                new_matrix = mf.recursive_add_lists(average_weight_gradient[j], mf.recursive_const_mult_matrix(1/len(labels), self.layer_list[j].weight_gradient))
-                average_weight_gradient[j] = new_matrix
-                average_bias_gradient[j] = mf.recursive_add_lists(average_bias_gradient[j], mf.recursive_const_mult_matrix(1/len(labels), self.layer_list[j].bias_gradient))
-        #result =  {'avg_w' : average_weight_gradient, 'avg_b' : average_bias_gradient}
-        #queue.put(result)
-        '''for k in range(len(self.layer_list)):
-            self.layer_list[k].weight_gradient = average_weight_gradient[k]
-            self.layer_list[k].bias_gradient = average_bias_gradient[k]
-            self.layer_list[k].update_layer_weights()
-            self.layer_list[k].update_bias_weights()'''
-
-    '''def test_grad_descent(self, labels, num_cores, start_num):
-            process_list = []
-            labels_sublists = []
-            queue = multiprocessing.Queue()
-            for i in range(num_cores):
-                current_pos = i*(len(labels)//num_cores)
-                labels_sublists.append(labels[current_pos:])
-                process_list.append(multiprocessing.Process(target=self.multithread_batch_gradient_descent,
-                                                            args = (labels_sublists[i], start_num+current_pos, queue)))
-                process_list[i].start()
-            for process in process_list:
-                process.join()
-            for result in queue'''
-
-
-
-    def update(self, avg_w, avg_b):
-        for k in range(len(self.layer_list)):
-            self.layer_list[k].weight_gradient = avg_w[k]
-            self.layer_list[k].bias_gradient = avg_b[k]
             self.layer_list[k].update_layer_weights()
             self.layer_list[k].update_bias_weights()
 
